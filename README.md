@@ -2,6 +2,8 @@
 
 This Chrome extension tries to change Gmail's **Maximum page size** setting based on the current window height.
 
+See it [in action](https://youtu.be/e5g83C-qnsE).
+
 ## Install
 
 1. Unzip the extension.
