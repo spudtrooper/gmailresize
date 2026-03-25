@@ -1,4 +1,4 @@
-# Gmail Resizer
+# ![icon](./chrome/icons/icon32.png) Gmail Resizer
 
 This Chrome extension tries to change Gmail's **Maximum page size** setting based on the current window height.
 
