@@ -7,6 +7,7 @@ const DEFAULTS = {
   enabled: true,
   automationDelayMs: 1200,
   localeMode: "english",
+  checkOnPageLoad: true,
 };
 
 const VALID_PAGE_SIZES = [10, 15, 20, 25, 50, 100];
@@ -32,7 +33,6 @@ function createRuleRow(rule = { minWidth: 0, maxWidth: 0, pageSize: 25 }) {
 async function load() {
   const current = await chrome.storage.sync.get({
     ...DEFAULTS,
-    checkOnPageLoad: true,
   });
   document.getElementById("checkOnPageLoad").checked = current.checkOnPageLoad;
   document.getElementById("automationDelayMs").value =
@@ -48,7 +48,7 @@ function getRulesFromUI() {
     minWidth: Number(tr.querySelector(".minWidth").value),
     maxWidth: Number(tr.querySelector(".maxWidth").value),
     pageSize: Number(tr.querySelector(".pageSize").value),
-  }));
+  })).sort((a, b) => a.minWidth - b.minWidth);
 }
 
 function validate(rules) {
@@ -75,15 +75,15 @@ async function save() {
     statusEl.textContent = error;
     return;
   }
-
-  await chrome.storage.sync.set({
+  const settings = {
+    rules,
+    localeMode: "english",
     checkOnPageLoad: document.getElementById("checkOnPageLoad").checked,
     automationDelayMs:
       Number(document.getElementById("automationDelayMs").value) ||
       DEFAULTS.automationDelayMs,
-    rules,
-    localeMode: "english",
-  });
+  };
+  await chrome.storage.sync.set(settings);
   statusEl.textContent = "Saved.";
   setTimeout(() => {
     statusEl.textContent = "";

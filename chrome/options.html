@@ -1,120 +1,125 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Gmail Adaptive Page Size Options</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 24px;
-        max-width: 900px;
-      }
 
-      h1 {
-        margin-bottom: 8px;
-      }
+<head>
+  <meta charset="utf-8" />
+  <title>Gmail Adaptive Page Size Options</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 24px;
+      max-width: 700px;
+    }
 
-      .note {
-        color: #444;
-        margin-bottom: 20px;
-      }
+    h1 {
+      margin-bottom: 8px;
+    }
 
-      table {
-        border-collapse: collapse;
-        width: 100%;
-        margin: 16px 0;
-      }
+    .note {
+      color: #444;
+      margin-bottom: 20px;
+    }
 
-      th,
-      td {
-        border: 1px solid #ddd;
-        padding: 8px;
-      }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 16px 0;
+    }
 
-      th {
-        text-align: left;
-        background: #f5f5f5;
-      }
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
 
-      input,
-      select {
-        width: 100%;
-        padding: 6px;
-        box-sizing: border-box;
-      }
+    th {
+      text-align: left;
+      background: #f5f5f5;
+    }
 
-      button {
-        padding: 8px 12px;
-        margin-right: 8px;
-        cursor: pointer;
-      }
+    input,
+    select {
+      width: 100%;
+      padding: 6px;
+      box-sizing: border-box;
+    }
 
-      .row-buttons {
-        margin-top: 12px;
-      }
+    input[type="checkbox"] {
+      width: auto;
+      border: 1px solid #ddd;
+      padding: 6px;
+    }
 
-      .status {
-        margin-top: 12px;
-        font-weight: bold;
-      }
+    button {
+      padding: 8px 12px;
+      margin-right: 8px;
+      cursor: pointer;
+    }
 
-      .warning {
-        background: #fff8e1;
-        border: 1px solid #e0c36a;
-        padding: 12px;
-        border-radius: 6px;
-      }
-    </style>
-  </head>
+    .row-buttons {
+      margin-top: 12px;
+    }
 
-  <body>
-    <h1>Gmail Adaptive Page Size</h1>
-    <p class="note">
-      Set Gmail conversation count rules based on window width. This works by
-      automating Gmail's settings page, so it may break if Gmail changes its UI.
-    </p>
+    .final-buttons {
+      margin-top: 96px;
+    }
 
-    <div class="warning">
-      <strong>Important:</strong> This version expects Gmail settings labels in
-      English and uses the built-in <em>Maximum page size</em> dropdown.
-    </div>
+    .status {
+      margin-top: 12px;
+      font-weight: bold;
+    }
 
-    <label
-      ><input type="checkbox" id="checkOnPageLoad" /> Check on page load</label
-    >
+    .warning {
+      background: #fff8e1;
+      border: 1px solid #e0c36a;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Min width</th>
-          <th>Max width</th>
-          <th>Page size</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="rulesBody"></tbody>
-    </table>
+<body>
+  <h1>Gmail Adaptive Page Size</h1>
+  <p class="note">
+    Set Gmail conversation count rules based on window width. This works by
+    automating Gmail's settings page, so it may break if Gmail changes its UI.
+  </p>
 
-    <div class="row-buttons">
-      <button id="addRule">Add rule</button>
-    </div>
+  <div class="warning">
+    <strong>Important:</strong> This version expects Gmail settings labels in
+    English and uses the built-in <em>Maximum page size</em> dropdown.
+  </div>
 
-    <h2>Advanced</h2>
-    <label
-      >Automation delay (ms)<br /><input
-        id="automationDelayMs"
-        type="number"
-        min="200"
-        step="100"
-    /></label>
+  <label><input type="checkbox" id="checkOnPageLoad" /> Check on page load</label>
 
-    <div class="row-buttons">
-      <button id="save">Save</button>
-      <button id="reset">Reset defaults</button>
-    </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Min width</th>
+        <th>Max width</th>
+        <th>Page size</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="rulesBody"></tbody>
+  </table>
 
-    <div class="status" id="status"></div>
+  <div class="row-buttons">
+    <button id="addRule">Add rule</button>
+  </div>
 
-    <script src="options.js"></script>
-  </body>
+  <h2>Advanced</h2>
+  <label>Automation delay (ms)<br /><input id="automationDelayMs" type="number" min="200" step="100" /></label>
+
+  <div class="row-buttons final-buttons">
+    <button id="save">Save</button>
+    <button id="reset">Reset defaults</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <script src="options.js"></script>
+</body>
+
 </html>

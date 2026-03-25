@@ -8,6 +8,7 @@ const DEFAULT_SETTINGS = {
   enabled: true,
   automationDelayMs: 1200,
   localeMode: "english",
+  checkOnPageLoad: true,
 };
 
 const VALID_PAGE_SIZES = new Set([10, 15, 20, 25, 50, 100]);
@@ -112,6 +113,7 @@ async function handleWidthReport(message, senderTabId) {
   }
 
   const settings = await getSettings();
+  console.log("[gmailresize] current settings", settings);
   if (!settings.checkOnPageLoad) {
     console.log("[gmailresize] skipping: extension disabled");
     return { skipped: "disabled" };
@@ -222,7 +224,7 @@ async function runAutomation(gmailTabId, pageSize, settings) {
       target: { tabId: gmailTabId },
       func: automationScript,
       args: [pageSize, settings.localeMode],
-    });
+    });x
     console.log("[gmailresize] automation script result", result?.result);
 
     if (!result?.result?.ok) {
@@ -246,6 +248,7 @@ async function handleForcePageSize(message) {
     throw new Error("Settings automation already in progress");
   }
   const settings = await getSettings();
+  console.log("[gmailresize] current settings", settings);
   const [activeGmailTab] = await chrome.tabs.query({
     active: true,
     lastFocusedWindow: true,

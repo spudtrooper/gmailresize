@@ -10,15 +10,6 @@ function setButtonsDisabled(disabled) {
   allButtons.forEach((b) => (b.disabled = disabled));
 }
 
-// Load checkOnPageLoad setting
-chrome.storage.sync.get({ checkOnPageLoad: true }, ({ checkOnPageLoad }) => {
-  document.getElementById("checkOnPageLoad").checked = checkOnPageLoad;
-});
-
-document.getElementById("checkOnPageLoad").addEventListener("change", (e) => {
-  chrome.storage.sync.set({ checkOnPageLoad: e.target.checked });
-});
-
 allButtons.forEach((btn) => {
   btn.addEventListener("click", async () => {
     const pageSize = Number(btn.dataset.size);
