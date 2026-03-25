@@ -1,4 +1,4 @@
-# Gmail Adaptive Page Size
+# Gmail Resizer
 
 This Chrome extension tries to change Gmail's **Maximum page size** setting based on the current window width.
 
