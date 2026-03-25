@@ -390,7 +390,9 @@ function automationScript(url, targetPageSize, localeMode) {
   async function saveChanges() {
     const clicked = clickIfFound((el) => /save changes/i.test(getText(el)));
     if (!clicked) {
-      console.warn("[gmailresize:automation] could not find Save Changes button");
+      console.warn(
+        "[gmailresize:automation] could not find Save Changes button",
+      );
       // return { ok: false, error: "Could not find Save Changes button." };
     }
     await sleep(1500);
