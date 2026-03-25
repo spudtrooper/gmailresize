@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Gmail Adaptive Page Size",
+  "version": "1.0.0",
+  "description": "Adjust Gmail maximum page size based on display width.",
+  "permissions": ["storage", "tabs", "scripting"],
+  "host_permissions": ["https://mail.google.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://mail.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html"
+}
