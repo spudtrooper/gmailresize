@@ -26,7 +26,12 @@
       if (!Number.isFinite(start) || !Number.isFinite(end)) return 0;
       return end - start + 1;
     })();
-    console.log("[gmailresize:content] width", width, "currentRowCount", currentRowCount);
+    console.log(
+      "[gmailresize:content] width",
+      width,
+      "currentRowCount",
+      currentRowCount,
+    );
 
     chrome.runtime.sendMessage({
       type: "gmail-width-report",

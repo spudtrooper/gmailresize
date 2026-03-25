@@ -17,7 +17,10 @@ chrome.runtime.onInstalled.addListener(async () => {
   console.log("[gmailresize] onInstalled: checking storage");
   const current = await chrome.storage.sync.get(null);
   if (!current.rules) {
-    console.log("[gmailresize] onInstalled: no rules found, writing defaults", DEFAULT_SETTINGS);
+    console.log(
+      "[gmailresize] onInstalled: no rules found, writing defaults",
+      DEFAULT_SETTINGS,
+    );
     await chrome.storage.sync.set(DEFAULT_SETTINGS);
   } else {
     console.log("[gmailresize] onInstalled: existing settings found", current);
@@ -25,7 +28,9 @@ chrome.runtime.onInstalled.addListener(async () => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("[gmailresize] message received", message?.type, { tabId: sender.tab?.id });
+  console.log("[gmailresize] message received", message?.type, {
+    tabId: sender.tab?.id,
+  });
   if (message?.type === "gmail-width-report") {
     handleWidthReport(message, sender.tab?.id).then(
       (result) => {
@@ -96,7 +101,10 @@ function pickPageSize(width, rules) {
 let settingsAutomationActive = false;
 
 async function handleWidthReport(message, senderTabId) {
-  console.log("[gmailresize] handleWidthReport", { width: message.width, senderTabId });
+  console.log("[gmailresize] handleWidthReport", {
+    width: message.width,
+    senderTabId,
+  });
 
   if (settingsAutomationActive) {
     console.log("[gmailresize] skipping: automation already in progress");
@@ -104,14 +112,19 @@ async function handleWidthReport(message, senderTabId) {
   }
 
   const settings = await getSettings();
-  if (!settings.enabled) {
+  if (!settings.checkOnPageLoad) {
     console.log("[gmailresize] skipping: extension disabled");
     return { skipped: "disabled" };
   }
 
   const width = Number(message.width);
   const requestedPageSize = pickPageSize(width, settings.rules);
-  console.log("[gmailresize] width", width, "→ requestedPageSize", requestedPageSize);
+  console.log(
+    "[gmailresize] width",
+    width,
+    "→ requestedPageSize",
+    requestedPageSize,
+  );
   if (!requestedPageSize) {
     console.log("[gmailresize] skipping: no matching rule for width", width);
     return { skipped: "no-matching-rule", width };
@@ -119,10 +132,21 @@ async function handleWidthReport(message, senderTabId) {
 
   const currentRowCount = Number(message.currentRowCount) || 0;
   if (currentRowCount === requestedPageSize) {
-    console.log("[gmailresize] skipping: row count already matches pageSize", { currentRowCount, requestedPageSize });
-    return { skipped: "row-count-matches", currentRowCount, requestedPageSize, width };
+    console.log("[gmailresize] skipping: row count already matches pageSize", {
+      currentRowCount,
+      requestedPageSize,
+    });
+    return {
+      skipped: "row-count-matches",
+      currentRowCount,
+      requestedPageSize,
+      width,
+    };
   }
-  console.log("[gmailresize] row count mismatch", { currentRowCount, requestedPageSize });
+  console.log("[gmailresize] row count mismatch", {
+    currentRowCount,
+    requestedPageSize,
+  });
 
   const state = await chrome.storage.local.get({
     lastAppliedPageSize: null,
@@ -134,7 +158,10 @@ async function handleWidthReport(message, senderTabId) {
   const bucket = `${requestedPageSize}`;
   const now = Date.now();
   if (state.lastAppliedBucket === bucket && now - state.lastAppliedAt < 30000) {
-    console.log("[gmailresize] skipping: recently applied", { bucket, age: now - state.lastAppliedAt });
+    console.log("[gmailresize] skipping: recently applied", {
+      bucket,
+      age: now - state.lastAppliedAt,
+    });
     return { skipped: "recently-applied", requestedPageSize, width };
   }
 
@@ -144,7 +171,10 @@ async function handleWidthReport(message, senderTabId) {
     url: "https://mail.google.com/*",
   });
   const gmailTabId = senderTabId ?? activeGmailTab?.id;
-  console.log("[gmailresize] gmailTabId", gmailTabId, { senderTabId, activeGmailTabId: activeGmailTab?.id });
+  console.log("[gmailresize] gmailTabId", gmailTabId, {
+    senderTabId,
+    activeGmailTabId: activeGmailTab?.id,
+  });
   if (!gmailTabId) {
     console.warn("[gmailresize] skipping: no Gmail tab found");
     return { skipped: "no-gmail-tab" };
@@ -157,21 +187,37 @@ async function handleWidthReport(message, senderTabId) {
     lastAppliedBucket: bucket,
     lastAppliedAt: Date.now(),
   });
-  console.log("[gmailresize] applied pageSize", requestedPageSize, "for width", width);
+  console.log(
+    "[gmailresize] applied pageSize",
+    requestedPageSize,
+    "for width",
+    width,
+  );
   return { applied: true, requestedPageSize, width };
 }
 
 async function runAutomation(gmailTabId, pageSize, settings) {
   settingsAutomationActive = true;
-  console.log("[gmailresize] navigating tab", gmailTabId, "to settings for pageSize", pageSize);
+  console.log(
+    "[gmailresize] navigating tab",
+    gmailTabId,
+    "to settings for pageSize",
+    pageSize,
+  );
   try {
     await chrome.tabs.update(gmailTabId, { url: GMAIL_SETTINGS_URL });
     console.log("[gmailresize] waiting for settings tab to load");
     //await waitForTabComplete(gmailTabId, 30000);
-    console.log("[gmailresize] settings tab loaded, waiting automationDelayMs", settings.automationDelayMs);
+    console.log(
+      "[gmailresize] settings tab loaded, waiting automationDelayMs",
+      settings.automationDelayMs,
+    );
     await delay(settings.automationDelayMs);
     await delay(1000);
-    console.log("[gmailresize] running automation script for pageSize", pageSize);
+    console.log(
+      "[gmailresize] running automation script for pageSize",
+      pageSize,
+    );
     const [result] = await chrome.scripting.executeScript({
       target: { tabId: gmailTabId },
       func: automationScript,
@@ -189,7 +235,9 @@ async function runAutomation(gmailTabId, pageSize, settings) {
 }
 
 async function handleForcePageSize(message) {
-  console.log("[gmailresize] handleForcePageSize", { pageSize: message.pageSize });
+  console.log("[gmailresize] handleForcePageSize", {
+    pageSize: message.pageSize,
+  });
   const pageSize = Number(message.pageSize);
   if (!VALID_PAGE_SIZES.has(pageSize)) {
     throw new Error(`Invalid page size: ${pageSize}`);
@@ -216,14 +264,24 @@ function waitForTabComplete(tabId, timeoutMs) {
   return new Promise((resolve, reject) => {
     console.log("[gmailresize] waitForTabComplete: watching tab", tabId);
     const timeout = setTimeout(() => {
-      console.error("[gmailresize] waitForTabComplete: timed out after", timeoutMs, "ms");
+      console.error(
+        "[gmailresize] waitForTabComplete: timed out after",
+        timeoutMs,
+        "ms",
+      );
       chrome.tabs.onUpdated.removeListener(listener);
       reject(new Error("Timed out waiting for Gmail settings tab to load"));
     }, timeoutMs);
 
     async function listener(updatedTabId, changeInfo) {
       if (updatedTabId === tabId) {
-        console.log("[gmailresize] tab", tabId, "update:", changeInfo.status, changeInfo.url || "");
+        console.log(
+          "[gmailresize] tab",
+          tabId,
+          "update:",
+          changeInfo.status,
+          changeInfo.url || "",
+        );
       }
       if (updatedTabId === tabId && changeInfo.status === "complete") {
         clearTimeout(timeout);
@@ -333,10 +391,18 @@ function automationScript(targetPageSize, localeMode) {
   }
 
   return (async () => {
-    console.log("[gmailresize:automation] starting for pageSize", targetPageSize, "localeMode", localeMode);
+    console.log(
+      "[gmailresize:automation] starting for pageSize",
+      targetPageSize,
+      "localeMode",
+      localeMode,
+    );
 
     if (localeMode !== "english") {
-      console.error("[gmailresize:automation] unsupported localeMode", localeMode);
+      console.error(
+        "[gmailresize:automation] unsupported localeMode",
+        localeMode,
+      );
       return {
         ok: false,
         error: "This version only supports English Gmail settings labels.",

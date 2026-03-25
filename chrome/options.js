@@ -30,8 +30,11 @@ function createRuleRow(rule = { minWidth: 0, maxWidth: 0, pageSize: 25 }) {
 }
 
 async function load() {
-  const current = await chrome.storage.sync.get(DEFAULTS);
-  document.getElementById("enabled").checked = current.enabled;
+  const current = await chrome.storage.sync.get({
+    ...DEFAULTS,
+    checkOnPageLoad: true,
+  });
+  document.getElementById("checkOnPageLoad").checked = current.checkOnPageLoad;
   document.getElementById("automationDelayMs").value =
     current.automationDelayMs;
   rulesBody.innerHTML = "";
@@ -74,7 +77,7 @@ async function save() {
   }
 
   await chrome.storage.sync.set({
-    enabled: document.getElementById("enabled").checked,
+    checkOnPageLoad: document.getElementById("checkOnPageLoad").checked,
     automationDelayMs:
       Number(document.getElementById("automationDelayMs").value) ||
       DEFAULTS.automationDelayMs,
