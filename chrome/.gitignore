@@ -75,3 +75,4 @@ test-results/
 .expo
 dist/
 web-build/.DS_Store
+dist/
