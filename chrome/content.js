@@ -33,11 +33,14 @@
       currentRowCount,
     );
 
+    const url = location.href;
+
     chrome.runtime.sendMessage({
       type: "gmail-height-report",
       height,
       currentRowCount,
       tabId: null,
+      url,
     });
   }
 

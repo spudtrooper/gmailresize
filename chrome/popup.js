@@ -13,12 +13,14 @@ function setButtonsDisabled(disabled) {
 allButtons.forEach((btn) => {
   btn.addEventListener("click", async () => {
     const pageSize = Number(btn.dataset.size);
+    const url = location.href;
     setStatus("Applying\u2026");
     setButtonsDisabled(true);
     try {
       const response = await chrome.runtime.sendMessage({
         type: "force-page-size",
         pageSize,
+        url,
       });
       if (response?.ok) {
         setStatus(`Applied: ${pageSize} rows`, "ok");

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Gmail Resizer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Adjust Gmail maximum page size based on display height.",
   "permissions": ["storage", "tabs", "scripting"],
   "host_permissions": ["https://mail.google.com/*"],

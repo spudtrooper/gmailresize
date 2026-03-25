@@ -102,9 +102,11 @@ function pickPageSize(height, rules) {
 let settingsAutomationActive = false;
 
 async function handleHeightReport(message, senderTabId) {
+  const url = message.url || "";
   console.log("[gmailresize] handleHeightReport", {
     height: message.height,
     senderTabId,
+    url,
   });
 
   if (settingsAutomationActive) {
@@ -182,7 +184,7 @@ async function handleHeightReport(message, senderTabId) {
     return { skipped: "no-gmail-tab" };
   }
 
-  await runAutomation(gmailTabId, requestedPageSize, settings);
+  await runAutomation(url, gmailTabId, requestedPageSize, settings);
 
   await chrome.storage.local.set({
     lastAppliedPageSize: requestedPageSize,
@@ -198,7 +200,7 @@ async function handleHeightReport(message, senderTabId) {
   return { applied: true, requestedPageSize, height };
 }
 
-async function runAutomation(gmailTabId, pageSize, settings) {
+async function runAutomation(url, gmailTabId, pageSize, settings) {
   settingsAutomationActive = true;
   console.log(
     "[gmailresize] navigating tab",
@@ -223,8 +225,8 @@ async function runAutomation(gmailTabId, pageSize, settings) {
     const [result] = await chrome.scripting.executeScript({
       target: { tabId: gmailTabId },
       func: automationScript,
-      args: [pageSize, settings.localeMode],
-    });x
+      args: [url, pageSize, settings.localeMode],
+    });
     console.log("[gmailresize] automation script result", result?.result);
 
     if (!result?.result?.ok) {
@@ -237,6 +239,7 @@ async function runAutomation(gmailTabId, pageSize, settings) {
 }
 
 async function handleForcePageSize(message) {
+  const url = message.url || "";
   console.log("[gmailresize] handleForcePageSize", {
     pageSize: message.pageSize,
   });
@@ -259,7 +262,7 @@ async function handleForcePageSize(message) {
   if (!gmailTabId) {
     throw new Error("No Gmail tab found. Open Gmail first.");
   }
-  await runAutomation(gmailTabId, pageSize, settings);
+  await runAutomation(url, gmailTabId, pageSize, settings);
   return { applied: true, pageSize };
 }
 
@@ -302,7 +305,7 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function automationScript(targetPageSize, localeMode) {
+function automationScript(url, targetPageSize, localeMode) {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   function clickIfFound(predicate) {
@@ -387,7 +390,8 @@ function automationScript(targetPageSize, localeMode) {
   async function saveChanges() {
     const clicked = clickIfFound((el) => /save changes/i.test(getText(el)));
     if (!clicked) {
-      return { ok: false, error: "Could not find Save Changes button." };
+      console.warn("[gmailresize:automation] could not find Save Changes button");
+      // return { ok: false, error: "Could not find Save Changes button." };
     }
     await sleep(1500);
     return { ok: true };
@@ -422,6 +426,12 @@ function automationScript(targetPageSize, localeMode) {
     console.log("[gmailresize:automation] saving changes");
     const saveResult = await saveChanges();
     console.log("[gmailresize:automation] saveChanges result", saveResult);
+    // Return to url
+    await sleep(500);
+    console.log("[gmailresize:automation] returning to url", url);
+    if (url) {
+      window.location.href = url;
+    }
     return saveResult;
   })();
 }
