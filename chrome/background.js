@@ -142,10 +142,10 @@ async function handleWidthReport(message, senderTabId) {
   try {
     await chrome.tabs.update(gmailTabId, { url: GMAIL_SETTINGS_URL });
     console.log("[gmailresize] waiting for settings tab to load");
-    await waitForTabComplete(gmailTabId, 30000);
+    //await waitForTabComplete(gmailTabId, 30000);
     console.log("[gmailresize] settings tab loaded, waiting automationDelayMs", settings.automationDelayMs);
     await delay(settings.automationDelayMs);
-
+    await delay(1000);
     console.log("[gmailresize] running automation script for pageSize", requestedPageSize);
     const [result] = await chrome.scripting.executeScript({
       target: { tabId: gmailTabId },
