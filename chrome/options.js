@@ -1,24 +1,25 @@
 const DEFAULTS = {
   rules: [
-    { minWidth: 0, maxWidth: 1399, pageSize: 10 },
-    { minWidth: 1400, maxWidth: 1999, pageSize: 25 },
-    { minWidth: 2000, maxWidth: 100000, pageSize: 50 },
+    { minHeight: 0, maxHeight: 699, pageSize: 10 },
+    { minHeight: 700, maxHeight: 999, pageSize: 15 },
+    { minHeight: 1000, maxHeight: 1999, pageSize: 25 },
+    { minHeight: 2000, maxHeight: 100000, pageSize: 50 },
   ],
-  enabled: true,
+  pollIntervalSeconds: 20,
   automationDelayMs: 1200,
   localeMode: "english",
   checkOnPageLoad: true,
 };
 
-const VALID_PAGE_SIZES = [10, 15, 20, 25, 50, 100];
+const VALID_PAGE_SIZES = [10, 15, 25, 50, 100];
 const rulesBody = document.getElementById("rulesBody");
 const statusEl = document.getElementById("status");
 
-function createRuleRow(rule = { minWidth: 0, maxWidth: 0, pageSize: 25 }) {
+function createRuleRow(rule = { minHeight: 0, maxHeight: 0, pageSize: 25 }) {
   const tr = document.createElement("tr");
   tr.innerHTML = `
-    <td><input type="number" class="minWidth" min="0" value="${rule.minWidth}" /></td>
-    <td><input type="number" class="maxWidth" min="0" value="${rule.maxWidth}" /></td>
+    <td><input type="number" class="minHeight" min="0" value="${rule.minHeight}" /></td>
+    <td><input type="number" class="maxHeight" min="0" value="${rule.maxHeight}" /></td>
     <td>
       <select class="pageSize">
         ${VALID_PAGE_SIZES.map((size) => `<option value="${size}" ${size === rule.pageSize ? "selected" : ""}>${size}</option>`).join("")}
@@ -44,22 +45,24 @@ async function load() {
 }
 
 function getRulesFromUI() {
-  return [...rulesBody.querySelectorAll("tr")].map((tr) => ({
-    minWidth: Number(tr.querySelector(".minWidth").value),
-    maxWidth: Number(tr.querySelector(".maxWidth").value),
-    pageSize: Number(tr.querySelector(".pageSize").value),
-  })).sort((a, b) => a.minWidth - b.minWidth);
+  return [...rulesBody.querySelectorAll("tr")]
+    .map((tr) => ({
+      minHeight: Number(tr.querySelector(".minHeight").value),
+      maxHeight: Number(tr.querySelector(".maxHeight").value),
+      pageSize: Number(tr.querySelector(".pageSize").value),
+    }))
+    .sort((a, b) => a.minHeight - b.minHeight);
 }
 
 function validate(rules) {
   if (!rules.length) return "Add at least one rule.";
   for (const rule of rules) {
     if (
-      !Number.isFinite(rule.minWidth) ||
-      !Number.isFinite(rule.maxWidth) ||
-      rule.minWidth > rule.maxWidth
+      !Number.isFinite(rule.minHeight) ||
+      !Number.isFinite(rule.maxHeight) ||
+      rule.minHeight > rule.maxHeight
     ) {
-      return "Each rule must have a valid min/max width.";
+      return "Each rule must have a valid min/max height.";
     }
     if (!VALID_PAGE_SIZES.includes(rule.pageSize)) {
       return "Each rule must use a valid Gmail page size.";
@@ -69,7 +72,7 @@ function validate(rules) {
 }
 
 async function save() {
-  const rules = getRulesFromUI().sort((a, b) => a.minWidth - b.minWidth);
+  const rules = getRulesFromUI().sort((a, b) => a.minHeight - b.minHeight);
   const error = validate(rules);
   if (error) {
     statusEl.textContent = error;
@@ -101,7 +104,7 @@ async function resetDefaults() {
 
 document.getElementById("addRule").addEventListener("click", () => {
   rulesBody.appendChild(
-    createRuleRow({ minWidth: 0, maxWidth: 0, pageSize: 25 }),
+    createRuleRow({ minHeight: 0, maxHeight: 0, pageSize: 25 }),
   );
 });
 document.getElementById("save").addEventListener("click", save);

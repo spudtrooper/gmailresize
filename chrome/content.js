@@ -1,20 +1,20 @@
 (() => {
   let timer = null;
-  let lastWidth = null;
+  let lastHeight = null;
 
-  function reportWidth() {
+  function reportHeight() {
     // Don't run on urls with #settings/ in them
     if (location.hash.includes("#settings/")) {
-      console.log("Skipping width report on settings page");
+      console.log("Skipping height report on settings page");
       return;
     }
 
-    const width = Math.max(
-      window.innerWidth || 0,
-      document.documentElement.clientWidth || 0,
+    const height = Math.max(
+      window.innerHeight || 0,
+      document.documentElement.clientHeight || 0,
     );
-    if (!width || width === lastWidth) return;
-    lastWidth = width;
+    if (!height || height === lastHeight) return;
+    lastHeight = height;
 
     const currentRowCount = (() => {
       const dj = document.querySelector("span.Dj");
@@ -27,15 +27,15 @@
       return end - start + 1;
     })();
     console.log(
-      "[gmailresize:content] width",
-      width,
+      "[gmailresize:content] height",
+      height,
       "currentRowCount",
       currentRowCount,
     );
 
     chrome.runtime.sendMessage({
-      type: "gmail-width-report",
-      width,
+      type: "gmail-height-report",
+      height,
       currentRowCount,
       tabId: null,
     });
@@ -43,7 +43,7 @@
 
   function scheduleReport() {
     clearTimeout(timer);
-    timer = setTimeout(reportWidth, 800);
+    timer = setTimeout(reportHeight, 800);
   }
 
   window.addEventListener("resize", scheduleReport, { passive: true });

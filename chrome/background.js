@@ -1,11 +1,11 @@
 const DEFAULT_SETTINGS = {
   rules: [
-    { minWidth: 0, maxWidth: 1399, pageSize: 10 },
-    { minWidth: 1400, maxWidth: 1999, pageSize: 25 },
-    { minWidth: 2000, maxWidth: 100000, pageSize: 50 },
+    { minHeight: 0, maxHeight: 699, pageSize: 10 },
+    { minHeight: 700, maxHeight: 999, pageSize: 15 },
+    { minHeight: 1000, maxHeight: 1999, pageSize: 25 },
+    { minHeight: 2000, maxHeight: 100000, pageSize: 50 },
   ],
   pollIntervalSeconds: 20,
-  enabled: true,
   automationDelayMs: 1200,
   localeMode: "english",
   checkOnPageLoad: true,
@@ -32,14 +32,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("[gmailresize] message received", message?.type, {
     tabId: sender.tab?.id,
   });
-  if (message?.type === "gmail-width-report") {
-    handleWidthReport(message, sender.tab?.id).then(
+  if (message?.type === "gmail-height-report") {
+    handleHeightReport(message, sender.tab?.id).then(
       (result) => {
-        console.log("[gmailresize] gmail-width-report result", result);
+        console.log("[gmailresize] gmail-height-report result", result);
         sendResponse({ ok: true, result });
       },
       (error) => {
-        console.error("[gmailresize] gmail-width-report error", error);
+        console.error("[gmailresize] gmail-height-report error", error);
         sendResponse({ ok: false, error: error.message || String(error) });
       },
     );
@@ -79,31 +79,31 @@ async function getSettings() {
 function normalizeRules(rules) {
   return [...rules]
     .map((rule) => ({
-      minWidth: Number(rule.minWidth),
-      maxWidth: Number(rule.maxWidth),
+      minHeight: Number(rule.minHeight),
+      maxHeight: Number(rule.maxHeight),
       pageSize: Number(rule.pageSize),
     }))
     .filter(
       (rule) =>
-        Number.isFinite(rule.minWidth) &&
-        Number.isFinite(rule.maxWidth) &&
+        Number.isFinite(rule.minHeight) &&
+        Number.isFinite(rule.maxHeight) &&
         VALID_PAGE_SIZES.has(rule.pageSize),
     )
-    .sort((a, b) => a.minWidth - b.minWidth);
+    .sort((a, b) => a.minHeight - b.minHeight);
 }
 
-function pickPageSize(width, rules) {
+function pickPageSize(height, rules) {
   const match = rules.find(
-    (rule) => width >= rule.minWidth && width <= rule.maxWidth,
+    (rule) => height >= rule.minHeight && height <= rule.maxHeight,
   );
   return match ? match.pageSize : null;
 }
 
 let settingsAutomationActive = false;
 
-async function handleWidthReport(message, senderTabId) {
-  console.log("[gmailresize] handleWidthReport", {
-    width: message.width,
+async function handleHeightReport(message, senderTabId) {
+  console.log("[gmailresize] handleHeightReport", {
+    height: message.height,
     senderTabId,
   });
 
@@ -119,17 +119,17 @@ async function handleWidthReport(message, senderTabId) {
     return { skipped: "disabled" };
   }
 
-  const width = Number(message.width);
-  const requestedPageSize = pickPageSize(width, settings.rules);
+  const height = Number(message.height);
+  const requestedPageSize = pickPageSize(height, settings.rules);
   console.log(
-    "[gmailresize] width",
-    width,
+    "[gmailresize] height",
+    height,
     "→ requestedPageSize",
     requestedPageSize,
   );
   if (!requestedPageSize) {
-    console.log("[gmailresize] skipping: no matching rule for width", width);
-    return { skipped: "no-matching-rule", width };
+    console.log("[gmailresize] skipping: no matching rule for height", height);
+    return { skipped: "no-matching-rule", height };
   }
 
   const currentRowCount = Number(message.currentRowCount) || 0;
@@ -142,7 +142,7 @@ async function handleWidthReport(message, senderTabId) {
       skipped: "row-count-matches",
       currentRowCount,
       requestedPageSize,
-      width,
+      height,
     };
   }
   console.log("[gmailresize] row count mismatch", {
@@ -164,7 +164,7 @@ async function handleWidthReport(message, senderTabId) {
       bucket,
       age: now - state.lastAppliedAt,
     });
-    return { skipped: "recently-applied", requestedPageSize, width };
+    return { skipped: "recently-applied", requestedPageSize, height };
   }
 
   const [activeGmailTab] = await chrome.tabs.query({
@@ -192,10 +192,10 @@ async function handleWidthReport(message, senderTabId) {
   console.log(
     "[gmailresize] applied pageSize",
     requestedPageSize,
-    "for width",
-    width,
+    "for height",
+    height,
   );
-  return { applied: true, requestedPageSize, width };
+  return { applied: true, requestedPageSize, height };
 }
 
 async function runAutomation(gmailTabId, pageSize, settings) {
