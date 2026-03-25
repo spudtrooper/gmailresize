@@ -57,5 +57,7 @@
     childList: true,
     subtree: true,
   });
-  scheduleReport();
+  chrome.storage.sync.get({ checkOnPageLoad: true }, ({ checkOnPageLoad }) => {
+    if (checkOnPageLoad) scheduleReport();
+  });
 })();

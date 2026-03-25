@@ -46,6 +46,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
+  if (message?.type === "force-page-size") {
+    handleForcePageSize(message).then(
+      (result) => {
+        console.log("[gmailresize] force-page-size result", result);
+        sendResponse({ ok: true, result });
+      },
+      (error) => {
+        console.error("[gmailresize] force-page-size error", error);
+        sendResponse({ ok: false, error: error.message || String(error) });
+      },
+    );
+    return true;
+  }
 });
 
 async function getSettings() {
@@ -137,8 +150,20 @@ async function handleWidthReport(message, senderTabId) {
     return { skipped: "no-gmail-tab" };
   }
 
+  await runAutomation(gmailTabId, requestedPageSize, settings);
+
+  await chrome.storage.local.set({
+    lastAppliedPageSize: requestedPageSize,
+    lastAppliedBucket: bucket,
+    lastAppliedAt: Date.now(),
+  });
+  console.log("[gmailresize] applied pageSize", requestedPageSize, "for width", width);
+  return { applied: true, requestedPageSize, width };
+}
+
+async function runAutomation(gmailTabId, pageSize, settings) {
   settingsAutomationActive = true;
-  console.log("[gmailresize] navigating tab", gmailTabId, "to settings");
+  console.log("[gmailresize] navigating tab", gmailTabId, "to settings for pageSize", pageSize);
   try {
     await chrome.tabs.update(gmailTabId, { url: GMAIL_SETTINGS_URL });
     console.log("[gmailresize] waiting for settings tab to load");
@@ -146,30 +171,45 @@ async function handleWidthReport(message, senderTabId) {
     console.log("[gmailresize] settings tab loaded, waiting automationDelayMs", settings.automationDelayMs);
     await delay(settings.automationDelayMs);
     await delay(1000);
-    console.log("[gmailresize] running automation script for pageSize", requestedPageSize);
+    console.log("[gmailresize] running automation script for pageSize", pageSize);
     const [result] = await chrome.scripting.executeScript({
       target: { tabId: gmailTabId },
       func: automationScript,
-      args: [requestedPageSize, settings.localeMode],
+      args: [pageSize, settings.localeMode],
     });
     console.log("[gmailresize] automation script result", result?.result);
 
     if (!result?.result?.ok) {
       throw new Error(result?.result?.error || "Automation failed");
     }
-
-    await chrome.storage.local.set({
-      lastAppliedPageSize: requestedPageSize,
-      lastAppliedBucket: bucket,
-      lastAppliedAt: Date.now(),
-    });
-    console.log("[gmailresize] applied pageSize", requestedPageSize, "for width", width);
-
-    return { applied: true, requestedPageSize, width };
   } finally {
     console.log("[gmailresize] clearing settingsAutomationActive");
     settingsAutomationActive = false;
   }
+}
+
+async function handleForcePageSize(message) {
+  console.log("[gmailresize] handleForcePageSize", { pageSize: message.pageSize });
+  const pageSize = Number(message.pageSize);
+  if (!VALID_PAGE_SIZES.has(pageSize)) {
+    throw new Error(`Invalid page size: ${pageSize}`);
+  }
+  if (settingsAutomationActive) {
+    throw new Error("Settings automation already in progress");
+  }
+  const settings = await getSettings();
+  const [activeGmailTab] = await chrome.tabs.query({
+    active: true,
+    lastFocusedWindow: true,
+    url: "https://mail.google.com/*",
+  });
+  const gmailTabId = activeGmailTab?.id;
+  console.log("[gmailresize] force-page-size: gmailTabId", gmailTabId);
+  if (!gmailTabId) {
+    throw new Error("No Gmail tab found. Open Gmail first.");
+  }
+  await runAutomation(gmailTabId, pageSize, settings);
+  return { applied: true, pageSize };
 }
 
 function waitForTabComplete(tabId, timeoutMs) {
