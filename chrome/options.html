@@ -1,58 +1,109 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <title>Gmail Adaptive Page Size Options</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; max-width: 900px; }
-    h1 { margin-bottom: 8px; }
-    .note { color: #444; margin-bottom: 20px; }
-    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { text-align: left; background: #f5f5f5; }
-    input, select { width: 100%; padding: 6px; box-sizing: border-box; }
-    button { padding: 8px 12px; margin-right: 8px; cursor: pointer; }
-    .row-buttons { margin-top: 12px; }
-    .status { margin-top: 12px; font-weight: bold; }
-    .warning { background: #fff8e1; border: 1px solid #e0c36a; padding: 12px; border-radius: 6px; }
-  </style>
-</head>
-<body>
-  <h1>Gmail Adaptive Page Size</h1>
-  <p class="note">Set Gmail conversation count rules based on window width. This works by automating Gmail's settings page, so it may break if Gmail changes its UI.</p>
+  <head>
+    <meta charset="utf-8" />
+    <title>Gmail Adaptive Page Size Options</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 24px;
+        max-width: 900px;
+      }
+      h1 {
+        margin-bottom: 8px;
+      }
+      .note {
+        color: #444;
+        margin-bottom: 20px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 16px 0;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+      }
+      th {
+        text-align: left;
+        background: #f5f5f5;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 6px;
+        box-sizing: border-box;
+      }
+      button {
+        padding: 8px 12px;
+        margin-right: 8px;
+        cursor: pointer;
+      }
+      .row-buttons {
+        margin-top: 12px;
+      }
+      .status {
+        margin-top: 12px;
+        font-weight: bold;
+      }
+      .warning {
+        background: #fff8e1;
+        border: 1px solid #e0c36a;
+        padding: 12px;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Gmail Adaptive Page Size</h1>
+    <p class="note">
+      Set Gmail conversation count rules based on window width. This works by
+      automating Gmail's settings page, so it may break if Gmail changes its UI.
+    </p>
 
-  <div class="warning">
-    <strong>Important:</strong> This version expects Gmail settings labels in English and uses the built-in <em>Maximum page size</em> dropdown.
-  </div>
+    <div class="warning">
+      <strong>Important:</strong> This version expects Gmail settings labels in
+      English and uses the built-in <em>Maximum page size</em> dropdown.
+    </div>
 
-  <label><input type="checkbox" id="enabled" /> Enable automatic adjustment</label>
+    <label
+      ><input type="checkbox" id="enabled" /> Enable automatic adjustment</label
+    >
 
-  <table>
-    <thead>
-      <tr>
-        <th>Min width</th>
-        <th>Max width</th>
-        <th>Page size</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="rulesBody"></tbody>
-  </table>
+    <table>
+      <thead>
+        <tr>
+          <th>Min width</th>
+          <th>Max width</th>
+          <th>Page size</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="rulesBody"></tbody>
+    </table>
 
-  <div class="row-buttons">
-    <button id="addRule">Add rule</button>
-  </div>
+    <div class="row-buttons">
+      <button id="addRule">Add rule</button>
+    </div>
 
-  <h2>Advanced</h2>
-  <label>Automation delay (ms)<br /><input id="automationDelayMs" type="number" min="200" step="100" /></label>
+    <h2>Advanced</h2>
+    <label
+      >Automation delay (ms)<br /><input
+        id="automationDelayMs"
+        type="number"
+        min="200"
+        step="100"
+    /></label>
 
-  <div class="row-buttons">
-    <button id="save">Save</button>
-    <button id="reset">Reset defaults</button>
-  </div>
+    <div class="row-buttons">
+      <button id="save">Save</button>
+      <button id="reset">Reset defaults</button>
+    </div>
 
-  <div class="status" id="status"></div>
+    <div class="status" id="status"></div>
 
-  <script src="options.js"></script>
-</body>
+    <script src="options.js"></script>
+  </body>
 </html>

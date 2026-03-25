@@ -3,14 +3,17 @@
   let lastWidth = null;
 
   function reportWidth() {
-    const width = Math.max(window.innerWidth || 0, document.documentElement.clientWidth || 0);
+    const width = Math.max(
+      window.innerWidth || 0,
+      document.documentElement.clientWidth || 0,
+    );
     if (!width || width === lastWidth) return;
     lastWidth = width;
 
     chrome.runtime.sendMessage({
-      type: 'gmail-width-report',
+      type: "gmail-width-report",
       width,
-      tabId: null
+      tabId: null,
     });
   }
 
@@ -19,18 +22,21 @@
     timer = setTimeout(reportWidth, 800);
   }
 
-  window.addEventListener('resize', scheduleReport, { passive: true });
-  window.addEventListener('focus', scheduleReport, { passive: true });
-  document.addEventListener('visibilitychange', () => {
+  window.addEventListener("resize", scheduleReport, { passive: true });
+  window.addEventListener("focus", scheduleReport, { passive: true });
+  document.addEventListener("visibilitychange", () => {
     if (!document.hidden) scheduleReport();
   });
 
   const observer = new MutationObserver(() => {
-    if (location.href.includes('mail.google.com')) {
+    if (location.href.includes("mail.google.com")) {
       scheduleReport();
     }
   });
 
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
   scheduleReport();
 })();
