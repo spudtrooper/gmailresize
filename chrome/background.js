@@ -6,7 +6,7 @@ const DEFAULT_SETTINGS = {
     { minHeight: 2000, maxHeight: 100000, pageSize: 50 },
   ],
   pollIntervalSeconds: 20,
-  automationDelayMs: 1200,
+  automationDelayMs: 0,
   localeMode: "english",
   checkOnPageLoad: true,
 };
@@ -50,6 +50,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.log("[gmailresize] get-settings result", settings);
       sendResponse({ ok: true, settings });
     });
+    return true;
+  }
+  if (message?.type === "get-current-page-size") {
+    getCurrentPageSize().then(
+      (result) => {
+        console.log("[gmailresize] get-current-page-size result", result);
+        sendResponse({ ok: true, ...result });
+      },
+      (error) => {
+        console.error("[gmailresize] get-current-page-size error", error);
+        sendResponse({ ok: false, error: error.message || String(error) });
+      },
+    );
     return true;
   }
   if (message?.type === "force-page-size") {
@@ -229,13 +242,39 @@ async function runAutomation(url, gmailTabId, pageSize, settings) {
     });
     console.log("[gmailresize] automation script result", result?.result);
 
-    if (!result?.result?.ok) {
+    // Clicking save goes to a new page, so executeScript won't return a value on success
+    if (result?.result && !result?.result?.ok) {
       throw new Error(result?.result?.error || "Automation failed");
     }
   } finally {
     console.log("[gmailresize] clearing settingsAutomationActive");
     settingsAutomationActive = false;
   }
+}
+
+async function getCurrentPageSize() {
+  const [activeGmailTab] = await chrome.tabs.query({
+    active: true,
+    lastFocusedWindow: true,
+    url: "https://mail.google.com/*",
+  });
+  if (!activeGmailTab?.id) {
+    return { currentRowCount: null };
+  }
+  const [result] = await chrome.scripting.executeScript({
+    target: { tabId: activeGmailTab.id },
+    func: () => {
+      const dj = document.querySelector("span.Dj");
+      if (!dj) return 0;
+      const ts = dj.querySelectorAll("span.ts");
+      if (ts.length < 2) return 0;
+      const start = parseInt(ts[0].textContent, 10);
+      const end = parseInt(ts[1].textContent, 10);
+      if (!Number.isFinite(start) || !Number.isFinite(end)) return 0;
+      return end - start + 1;
+    },
+  });
+  return { currentRowCount: result?.result || null };
 }
 
 async function handleForcePageSize(message) {
@@ -305,135 +344,156 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function automationScript(url, targetPageSize, localeMode) {
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function automationScript(url, targetPageSize, localeMode) {
+  async function automationScriptInternal(url, targetPageSize, localeMode) {
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  function clickIfFound(predicate) {
-    const el = Array.from(
-      document.querySelectorAll('button, div[role="button"], span, a'),
-    ).find(predicate);
-    if (el) {
-      el.click();
-      return true;
+    function clickIfFound(predicate) {
+      const el = Array.from(
+        document.querySelectorAll('button, div[role="button"], span, a'),
+      ).find(predicate);
+      console.log("[gmailresize:automation] clickIfFound", { predicate, el });
+      if (el) {
+        el.click();
+        return true;
+      }
+      return false;
     }
-    return false;
-  }
 
-  function getText(el) {
-    return (el?.innerText || el?.textContent || "").trim();
-  }
-
-  async function openGeneralIfNeeded() {
-    const headings = Array.from(
-      document.querySelectorAll('h2, h3, [role="heading"]'),
-    );
-    if (headings.some((h) => /general/i.test(getText(h)))) return true;
-
-    const clicked = clickIfFound((el) => /general/i.test(getText(el)));
-    if (clicked) {
-      await sleep(500);
-      return true;
+    function getText(el) {
+      return (el?.innerText || el?.textContent || "").trim();
     }
-    return false;
-  }
 
-  async function setPageSize() {
-    const selects = Array.from(document.querySelectorAll("select"));
-    let targetSelect = selects.find((select) => {
-      const nearby = [
-        select,
-        select.parentElement,
-        select.closest("tr"),
-        select.closest("div"),
-      ]
-        .filter(Boolean)
-        .map(getText)
-        .join(" ");
-      return /maximum page size/i.test(nearby);
-    });
-
-    if (!targetSelect) {
-      const rows = Array.from(document.querySelectorAll("tr, div"));
-      const row = rows.find(
-        (node) =>
-          /maximum page size/i.test(getText(node)) &&
-          node.querySelector("select"),
+    async function openGeneralIfNeeded() {
+      const headings = Array.from(
+        document.querySelectorAll('h2, h3, [role="heading"]'),
       );
-      targetSelect = row?.querySelector("select") || null;
+      if (headings.some((h) => /general/i.test(getText(h)))) return true;
+
+      const clicked = clickIfFound((el) => /general/i.test(getText(el)));
+      if (clicked) {
+        await sleep(500);
+        return true;
+      }
+      return false;
     }
 
-    if (!targetSelect) {
-      return {
-        ok: false,
-        error:
-          "Could not find the Maximum page size dropdown. Gmail UI may have changed.",
-      };
-    }
+    async function setPageSize() {
+      const selects = Array.from(document.querySelectorAll("select"));
+      let targetSelect = selects.find((select) => {
+        const nearby = [
+          select,
+          select.parentElement,
+          select.closest("tr"),
+          select.closest("div"),
+        ]
+          .filter(Boolean)
+          .map(getText)
+          .join(" ");
+        return /maximum page size/i.test(nearby);
+      });
 
-    const desired = String(targetPageSize);
-    const option = Array.from(targetSelect.options).find(
-      (opt) => opt.value === desired || getText(opt).includes(desired),
-    );
-    if (!option) {
-      return {
-        ok: false,
-        error: `Could not find page size option ${targetPageSize}.`,
-      };
-    }
+      if (!targetSelect) {
+        const rows = Array.from(document.querySelectorAll("tr, div"));
+        const row = rows.find(
+          (node) =>
+            /maximum page size/i.test(getText(node)) &&
+            node.querySelector("select"),
+        );
+        targetSelect = row?.querySelector("select") || null;
+      }
 
-    targetSelect.value = option.value;
-    targetSelect.dispatchEvent(new Event("change", { bubbles: true }));
-    await sleep(400);
-    return { ok: true };
-  }
+      if (!targetSelect) {
+        return {
+          ok: false,
+          error:
+            "Could not find the Maximum page size dropdown. Gmail UI may have changed.",
+        };
+      }
 
-  async function saveChanges() {
-    const clicked = clickIfFound((el) => /save changes/i.test(getText(el)));
-    if (!clicked) {
-      console.warn(
-        "[gmailresize:automation] could not find Save Changes button",
+      const desired = String(targetPageSize);
+      const option = Array.from(targetSelect.options).find(
+        (opt) => opt.value === desired || getText(opt).includes(desired),
       );
-      // return { ok: false, error: "Could not find Save Changes button." };
+      console.log("[gmailresize:automation] targetSelect found", {
+        targetSelect,
+        option,
+      });
+      if (!option) {
+        return {
+          ok: false,
+          error: `Could not find page size option ${targetPageSize}.`,
+        };
+      }
+
+      targetSelect.value = option.value;
+      targetSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      await sleep(400);
+      return { ok: true };
     }
-    await sleep(1500);
-    return { ok: true };
-  }
 
-  return (async () => {
-    console.log(
-      "[gmailresize:automation] starting for pageSize",
-      targetPageSize,
-      "localeMode",
-      localeMode,
-    );
+    async function saveChanges() {
+      const clicked = clickIfFound((el) => /save changes/i.test(getText(el)));
+      console.log("[gmailresize:automation] saveChanges click result", clicked);
+      if (!clicked) {
+        console.warn(
+          "[gmailresize:automation] could not find Save Changes button",
+        );
+        // return { ok: false, error: "Could not find Save Changes button." };
+      }
+      await sleep(1500);
+      return { ok: true };
+    }
 
-    if (localeMode !== "english") {
-      console.error(
-        "[gmailresize:automation] unsupported localeMode",
+    return (async () => {
+      console.log(
+        "[gmailresize:automation] starting for pageSize",
+        targetPageSize,
+        "localeMode",
         localeMode,
       );
-      return {
-        ok: false,
-        error: "This version only supports English Gmail settings labels.",
-      };
-    }
 
-    await sleep(800);
-    console.log("[gmailresize:automation] opening General tab if needed");
-    await openGeneralIfNeeded();
-    console.log("[gmailresize:automation] setting page size");
-    const setResult = await setPageSize();
-    console.log("[gmailresize:automation] setPageSize result", setResult);
-    if (!setResult.ok) return setResult;
-    console.log("[gmailresize:automation] saving changes");
-    const saveResult = await saveChanges();
-    console.log("[gmailresize:automation] saveChanges result", saveResult);
-    // Return to url
-    await sleep(500);
-    console.log("[gmailresize:automation] returning to url", url);
-    if (url) {
-      window.location.href = url;
-    }
-    return saveResult;
-  })();
+      if (localeMode !== "english") {
+        console.error(
+          "[gmailresize:automation] unsupported localeMode",
+          localeMode,
+        );
+        return {
+          ok: false,
+          error: "This version only supports English Gmail settings labels.",
+        };
+      }
+
+      await sleep(800);
+      console.log("[gmailresize:automation] opening General tab if needed");
+      await openGeneralIfNeeded();
+      console.log("[gmailresize:automation] setting page size");
+      const setResult = await setPageSize();
+      console.log("[gmailresize:automation] setPageSize result", setResult);
+      if (!setResult.ok) return setResult;
+      console.log("[gmailresize:automation] saving changes");
+      const saveResult = await saveChanges();
+      console.log("[gmailresize:automation] saveChanges result", saveResult);
+      // Return to url
+      // await sleep(500);
+      // console.log("[gmailresize:automation] returning to url", url);
+      // if (url) {
+      //   window.location.href = url;
+      // }
+      console.log(
+        "[gmailresize:automation] completed automation script",
+        saveResult,
+      );
+      return saveResult;
+    })();
+  }
+
+  try {
+    const res = await automationScriptInternal(url, targetPageSize, localeMode);
+    console.log("[gmailresize:automation] automationScript result", res);
+    return res;
+  } catch (error) {
+    console.error("[gmailresize:automation] error in automationScript", error);
+    return { ok: false, error: error.message || String(error) };
+  }
 }

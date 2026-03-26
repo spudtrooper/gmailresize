@@ -10,15 +10,18 @@
         padding: 12px 16px;
         width: 260px;
       }
+
       h3 {
         margin: 0 0 10px;
         font-size: 14px;
       }
+
       .size-buttons {
         display: flex;
         gap: 6px;
         margin-bottom: 12px;
       }
+
       .size-buttons button {
         flex: 1;
         padding: 8px 0;
@@ -28,18 +31,22 @@
         border-radius: 4px;
         background: #f8f8f8;
       }
+
       .size-buttons button:hover:not(:disabled) {
         background: #e8e8e8;
       }
+
       .size-buttons button:disabled {
         opacity: 0.5;
         cursor: default;
       }
+
       hr {
         border: none;
         border-top: 1px solid #eee;
         margin: 10px 0;
       }
+
       label {
         display: flex;
         align-items: center;
@@ -47,22 +54,43 @@
         font-size: 13px;
         cursor: pointer;
       }
+
+      .current-setting {
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 8px;
+      }
+
+      .current-page-size {
+        font-weight: bold;
+        color: #333;
+      }
+
+      .size-buttons button.active {
+        background: #1a73e8;
+        color: #fff;
+        border-color: #1a73e8;
+      }
+
       .status {
         margin-top: 10px;
         font-size: 12px;
         color: #555;
         min-height: 16px;
       }
+
       .status.error {
         color: #c62828;
       }
+
       .status.ok {
         color: #2e7d32;
       }
     </style>
   </head>
+
   <body>
-    <h3>Set page size</h3>
+    <h3># rows</h3>
     <div class="size-buttons">
       <button data-size="10">10</button>
       <button data-size="15">15</button>
@@ -71,6 +99,9 @@
       <button data-size="100">100</button>
     </div>
     <hr />
+    <div class="current-setting" id="current-setting">
+      Current: <span id="current-page-size">--</span> rows
+    </div>
     <div class="status" id="status"></div>
     <script src="popup.js"></script>
   </body>

@@ -6,7 +6,7 @@ const DEFAULTS = {
     { minHeight: 2000, maxHeight: 100000, pageSize: 50 },
   ],
   pollIntervalSeconds: 20,
-  automationDelayMs: 1200,
+  automationDelayMs: 0,
   localeMode: "english",
   checkOnPageLoad: true,
 };
